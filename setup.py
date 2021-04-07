@@ -14,7 +14,7 @@ setup (
 	name="authenticator",
 	version="0.0.1",
 	description="SDK for auth",
-	url="https://github.com/licenseware/authenticator",
+	url="https://github.com/licenseware/lware-components-authenticator",
 	author="licenseware",
 	author_email="contact@licenseware.io",
 	license='',
