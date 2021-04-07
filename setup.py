@@ -13,7 +13,7 @@ with open("README.md", "r") as fh:
 setup (
 	name="authenticator",
 	version="0.0.1",
-	description="SDK for auth",
+	description="SDK for authentification",
 	url="https://github.com/licenseware/lware-components-authenticator",
 	author="licenseware",
 	author_email="contact@licenseware.io",
