@@ -1,6 +1,6 @@
 # Authenticator (Beta)
 
-This can be used to Licenseware authentification. Note that you must have already setup an account on [licenseware.io](https://licenseware.io/).
+This can be used to Licenseware authentification. Note that you must have already an account on [licenseware.io](https://licenseware.io/).
 
 
 ## Quickstart
