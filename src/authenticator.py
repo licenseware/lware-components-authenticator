@@ -2,40 +2,57 @@ import requests
 import logging
 import os
 
+
 class Authenticator:
 
     """
-        If init variables are not provided on class initialization it will try 
-        to get from environment variables the following values:
-        - LWARE_IDENTITY_USER
-        - LWARE_IDENTITY_PASSWORD
-        - AUTH_SERVICE_URL
+    
+    This class can be used for Licenseware authentification.
 
-        If environment variables are set then you can connect to licenseware with:
-        ```
-        
-        Authenticator.connect()
+    Set login values in environment variables:
+    - LWARE_IDENTITY_USER (the email)
+    - LWARE_IDENTITY_PASSWORD (the password)
 
-        ```
-        Otherwise specify parameters and call `login`:
-        ```
-        Authenticator(
-            user="your user", 
-            password="your password", 
-            auth_url="authentification url"
-        ).login()
-        ```
+    Otherwise you can pass them directly into Authenticator (not recommended).
+    - email
+    - password
+
+    If you are using environment variables you can login like this:
+    ```py
+    
+    from authenticator import Authenticator
+
+    response = Authenticator.connect()
+    # check response
+
+    ``` 
+
+    Or like this if you are not using environment variables:
+    
+    ```py
+    
+    from authenticator import Authenticator
+
+    response = Authenticator(
+        email="email@company.com", password="not recommended"
+    ).connect()
+
+    # check response
+    
+
+    ```
+
     """
 
     def __init__(
         self, 
-        user=None, 
+        email=None, 
         password=None, 
         auth_url=None,
         debug=False
     ):
         
-        self.user = user or os.getenv("LWARE_IDENTITY_USER")
+        self.email = email or os.getenv("LWARE_IDENTITY_USER")
         self.password = password or os.getenv("LWARE_IDENTITY_PASSWORD")
         self.auth_url = auth_url or os.getenv("AUTH_SERVICE_URL")
         self.debug = debug
@@ -52,13 +69,18 @@ class Authenticator:
         else:
             os.environ['APP_AUTHENTICATED'] = 'false'
             cls().show_logs('Could not login')
+        
+        return response
+
 
     def login(self):
-        payload = {
-            "user": self.user,
-            "lware_identity_password": self.lware_identity_password
-        }
 
+        identity = "email" if "/auth/users" in self.auth_url else "machine_name"
+        payload = {
+            identity: self.email,
+            "password": self.password
+        }
+        
         self.show_logs(payload)
         response = requests.post(url=f'{self.auth_url}/login', json=payload)
         self.show_logs(response.content)
@@ -68,12 +90,20 @@ class Authenticator:
         else:
             return self.create_user()
 
-    def create_user(self):
-        payload = {
-            "user": os.getenv("user"),
-            "password": os.getenv("LWARE_IDENTITY_lware_identity_password"),   
-        }
 
+    def create_user(self):
+
+        if "/auth/users" in self.auth_url:
+            return {
+                "status": "fail", 
+                "message": "Please create an account before using this sdk."
+            }, 403
+
+        payload = {
+            "machine_name": self.email,
+            "password": self.password
+        }
+        
         self.show_logs(payload)
         response = requests.post(url=f'{self.auth_url}/create', json=payload)
         
