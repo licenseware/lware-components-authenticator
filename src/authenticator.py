@@ -12,10 +12,12 @@ class Authenticator:
     Set login values in environment variables:
     - LWARE_IDENTITY_USER (the email)
     - LWARE_IDENTITY_PASSWORD (the password)
+    - AUTH_SERVICE_URL (the url for login)
 
     Otherwise you can pass them directly into Authenticator (not recommended).
     - email
     - password
+    - auth_url
 
     If you are using environment variables you can login like this:
     ```py
@@ -34,7 +36,9 @@ class Authenticator:
     from authenticator import Authenticator
 
     response = Authenticator(
-        email="email@company.com", password="not recommended"
+        email="email@company.com", 
+        password="not recommended", 
+        auth_url="https://licenseware.io/auth/users/login"
     ).connect()
 
     # check response
@@ -60,11 +64,13 @@ class Authenticator:
         
     @classmethod
     def connect(cls):
-        response = cls().login()
-        if response:
+        response, status_code = cls().login()
+        cls().show_logs(response, status_code)
+        
+        if status_code == 200:
             cls().show_logs('Logged in')
-            os.environ['AUTH_TOKEN'] = response["Authorization"]
-            os.environ['TENANT_ID'] = response["TenantId"]
+            os.environ['AUTH_TOKEN'] = response.get("Authorization", "Authorization not found")
+            os.environ['TENANT_ID'] = response.get("TenantId", "TenantId not found")
             os.environ['APP_AUTHENTICATED'] = 'true'
         else:
             os.environ['APP_AUTHENTICATED'] = 'false'
@@ -82,16 +88,17 @@ class Authenticator:
         }
         
         self.show_logs(payload)
-        response = requests.post(url=f'{self.auth_url}/login', json=payload)
+        url=f"{self.auth_url}{'/login' if '/login' not in self.auth_url else ''}"
+        response = requests.post(url, json=payload)
         self.show_logs(response.content)
 
         if response.status_code == 200:
-            return response.json()
+            return response.json(), 200
         else:
-            return self.create_user()
+            return self.create_machine()
 
 
-    def create_user(self):
+    def create_machine(self):
 
         if "/auth/users" in self.auth_url:
             return {
@@ -111,8 +118,14 @@ class Authenticator:
             return response.json()
     
         self.show_logs(response.content)
+        return {
+            "status": "fail",
+            "message": "Could not create user",
+        }, 500
+            
         
-
-    def show_logs(self, debug_info):
-        if self.debug: logging.warning(debug_info)
+    def show_logs(self, *debug_info):
+        if self.debug: 
+            debug_info = " ; ".join([str(info) for info in debug_info])
+            logging.warning(debug_info)
 
