@@ -44,7 +44,7 @@ from authenticator import Authenticator
 response = Authenticator(
     email="email@company.com", 
     password="not recommended", 
-    auth_url="https://licenseware.io/auth/users/login"
+    auth_url="https://licenseware.io/auth"
 ).connect()
 
 # check response

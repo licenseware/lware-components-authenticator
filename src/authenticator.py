@@ -38,7 +38,7 @@ class Authenticator:
     response = Authenticator(
         email="email@company.com", 
         password="not recommended", 
-        auth_url="https://licenseware.io/auth/users/login"
+        auth_url="https://licenseware.io/auth"
     ).connect()
 
     # check response
@@ -56,9 +56,16 @@ class Authenticator:
         debug=False
     ):
         
-        self.email = email or os.getenv("LWARE_IDENTITY_USER")
+        self.email    = email    or os.getenv("LWARE_IDENTITY_USER")
         self.password = password or os.getenv("LWARE_IDENTITY_PASSWORD")
         self.auth_url = auth_url or os.getenv("AUTH_SERVICE_URL")
+
+        if os.getenv('AUTH_SERVICE_MACHINES_URL_PATH'):
+            self.auth_url = self.auth_url + os.getenv('AUTH_SERVICE_MACHINES_URL_PATH') 
+        else:
+            route = os.getenv('AUTH_SERVICE_USERS_URL_PATH') or '/users'
+            self.auth_url = self.auth_url + route
+
         self.debug = debug
 
         
@@ -88,8 +95,7 @@ class Authenticator:
         }
         
         self.show_logs(payload)
-        url=f"{self.auth_url}{'/login' if '/login' not in self.auth_url else ''}"
-        response = requests.post(url, json=payload)
+        response = requests.post(url=f"{self.auth_url}/login", json=payload)
         self.show_logs(response.content)
 
         if response.status_code == 200:
@@ -100,7 +106,7 @@ class Authenticator:
 
     def create_machine(self):
 
-        if "/auth/users" in self.auth_url:
+        if not os.getenv('AUTH_SERVICE_MACHINES_URL_PATH'):
             return {
                 "status": "fail", 
                 "message": "Please create an account before using this sdk."
